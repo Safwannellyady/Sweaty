@@ -9,10 +9,18 @@ function authHeaders() {
 }
 
 export async function api(path, options = {}) {
-  const res = await fetch(`${API_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...authHeaders(), ...(options.headers || {}) },
-    ...options,
-  });
+  let res;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      headers: { 'Content-Type': 'application/json', ...authHeaders(), ...(options.headers || {}) },
+      ...options,
+    });
+  } catch (err) {
+    // Network failure — the free demo server sleeps when idle, so the first
+    // request after a while can fail while it wakes up. Say so plainly
+    // instead of failing silently.
+    return { status: 0, ok: false, error: 'Could not reach the server. It may be waking up — please try again in a few seconds.' };
+  }
   const data = await res.json().catch(() => ({}));
   return { status: res.status, ok: res.ok, ...data };
 }
